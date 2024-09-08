@@ -1,6 +1,4 @@
-import { Fragment } from 'react';
 import { redirect } from 'next/navigation';
-import PostThread from '@/components/forms/PostThread';
 import { fetchUser } from '@/lib/actions/user.actions';
 import { currentUser } from '@clerk/nextjs';
 import ProfileHeader from '@/components/shared/ProfileHeader';
