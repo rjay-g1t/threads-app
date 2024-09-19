@@ -1,8 +1,8 @@
 ## This is a WIP of threads application that I created.
 
-# Feel free to look around it.
+### Feel free to look around it.
 
-# Link: https://threads-app-blush-five.vercel.app/
+### Link: https://threads-app-blush-five.vercel.app/
 
 ```
 I used ClerkJS for the authentication of the app.
