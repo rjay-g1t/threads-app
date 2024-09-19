@@ -1,3 +1,11 @@
+** This is my version of threads application **
+** Feel free to look around it **
+Link: https://threads-app-blush-five.vercel.app/
+
+I used ClerkJS for the authentication of the app.
+ShadCN for the forms, and other components.
+Mongodb for the database.
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
