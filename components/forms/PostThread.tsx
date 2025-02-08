@@ -1,17 +1,13 @@
 'use client';
-import { useState } from 'react';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -26,7 +22,7 @@ import { useOrganization } from '@clerk/nextjs';
 function PostThread({ userId }: { userId: string }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { organization } = useOrganization();
+  const { organization } = useOrganization() || { organization: null };
 
   const form = useForm({
     resolver: zodResolver(ThreadValidation),
@@ -39,8 +35,6 @@ function PostThread({ userId }: { userId: string }) {
   const onSubmitValues: SubmitHandler<
     z.infer<typeof ThreadValidation>
   > = async (values) => {
-    console.log('values', values);
-    console.log('organization', organization);
     try {
       await createThread({
         text: values.thread,
@@ -48,6 +42,7 @@ function PostThread({ userId }: { userId: string }) {
         communityId: organization?.id || '',
         path: pathname,
       });
+
       router.push('/');
     } catch (error) {
       console.log(`Failed to create thread: ${error}`);
