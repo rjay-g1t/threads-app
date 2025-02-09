@@ -11,18 +11,16 @@ import {
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import Image from 'next/image';
 import { Textarea } from '../ui/textarea';
 import { usePathname, useRouter } from 'next/navigation';
 import { ThreadValidation } from '@/lib/validations/threads';
-import { updateUser } from '@/lib/actions/user.actions';
 import { createThread } from '@/lib/actions/thread.action';
 import { useOrganization } from '@clerk/nextjs';
 
 function PostThread({ userId }: { userId: string }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { organization } = useOrganization() || { organization: null };
+  const { organization } = useOrganization();
 
   const form = useForm({
     resolver: zodResolver(ThreadValidation),
@@ -42,7 +40,6 @@ function PostThread({ userId }: { userId: string }) {
         communityId: organization?.id || '',
         path: pathname,
       });
-
       router.push('/');
     } catch (error) {
       console.log(`Failed to create thread: ${error}`);

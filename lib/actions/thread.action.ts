@@ -199,11 +199,17 @@ export async function deleteThread(id: string, path: string): Promise<void> {
   }
 }
 
-export async function likeThread(
-  threadId: string,
-  userId: string,
-  path: string
-) {
+export async function likeThread({
+  threadId,
+  userId,
+  path,
+  isLiked,
+}: {
+  threadId: string;
+  userId: string;
+  path: string;
+  isLiked: boolean;
+}) {
   try {
     connectToDatabase();
 
@@ -215,10 +221,15 @@ export async function likeThread(
     }
 
     // Check if the user has already liked the thread
-    const isLiked = thread.likes.includes(userId);
+    //const isLiked = thread.likes.includes(userId);
 
     if (isLiked) {
-      throw new Error('Thread already liked');
+      const indexOf = thread.likes.indexOf(userId);
+      thread.likes.splice(indexOf, 1);
+      await thread.save();
+      revalidatePath(path);
+      return;
+      //throw new Error('Thread already liked'); // thread.likes.indexOf(userId)
     }
 
     // Add the user's ID to the likes array
@@ -231,39 +242,39 @@ export async function likeThread(
   }
 }
 
-export async function unlikeThread(
-  threadId: string,
-  userId: string,
-  path: string
-) {
-  try {
-    connectToDatabase();
+// export async function unlikeThread(
+//   threadId: string,
+//   userId: string,
+//   path: string
+// ) {
+//   try {
+//     connectToDatabase();
 
-    // Find the thread by ID
-    const thread = await Thread.findById(threadId);
+//     // Find the thread by ID
+//     const thread = await Thread.findById(threadId);
 
-    if (!thread) {
-      throw new Error('Thread not found');
-    }
+//     if (!thread) {
+//       throw new Error('Thread not found');
+//     }
 
-    // Check if the user has liked the thread
-    const isLiked = thread.likes.includes(userId);
+//     // Check if the user has liked the thread
+//     const isLiked = thread.likes.includes(userId);
 
-    if (!isLiked) {
-      throw new Error('Thread not liked yet');
-    }
+//     if (!isLiked) {
+//       throw new Error('Thread not liked yet');
+//     }
 
-    // Remove the user's ID from the likes array
-    thread.likes = thread.likes.filter(
-      (id: any) => id.toString() !== userId.toString()
-    );
-    await thread.save();
+//     // Remove the user's ID from the likes array
+//     thread.likes = thread.likes.filter(
+//       (id: any) => id.toString() !== userId.toString()
+//     );
+//     await thread.save();
 
-    revalidatePath(path);
-  } catch (error: any) {
-    throw new Error(`Failed to unlike thread: ${error.message}`);
-  }
-}
+//     revalidatePath(path);
+//   } catch (error: any) {
+//     throw new Error(`Failed to unlike thread: ${error.message}`);
+//   }
+// }
 
 export async function fetchThreads() {
   try {

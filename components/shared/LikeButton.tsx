@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { likeThread, unlikeThread } from '@/lib/actions/thread.action';
+import { likeThread } from '@/lib/actions/thread.action';
 
 interface LikeButtonProps {
   threadId: string;
@@ -14,11 +14,7 @@ const LikeButton = ({ threadId, userId, likes }: LikeButtonProps) => {
 
   const handleLikeClick = async () => {
     try {
-      if (isLiked) {
-        await unlikeThread(threadId, userId, '/');
-      } else {
-        await likeThread(threadId, userId, '/');
-      }
+      await likeThread({ threadId, userId, path: '/', isLiked });
     } catch (error) {
       console.error('Error toggling like:', error);
     }

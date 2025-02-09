@@ -4,7 +4,7 @@ const threadSchema = new mongoose.Schema({
   text: { type: String, required: true },
   author: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
   community: {
-    type: String,
+    type: String, // change to Clerk type for community ID
     required: false,
   },
   createdAt: { type: Date, default: Date.now },

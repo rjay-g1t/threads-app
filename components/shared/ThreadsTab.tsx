@@ -26,6 +26,7 @@ const ThreadsTab: React.FC<ThreadsTabProps> = async ({
           currentUserId={currentUserId}
           parentId={thread.parentId}
           content={thread.text}
+          likes={thread.likes}
           author={
             accountType === 'User'
               ? { name: result.name, image: result.image, id: result.id }
