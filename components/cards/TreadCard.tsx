@@ -2,6 +2,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import DeleteThread from '../forms/DeleteThread';
 import { formatDateString } from '@/lib/utils';
+import LikeButton from '../shared/LikeButton';
+import { useOrganization } from '@clerk/nextjs';
 
 interface ThreadCardProps {
   key: string;
@@ -26,6 +28,7 @@ interface ThreadCardProps {
     };
   }[];
   isComment?: boolean;
+  likes: string[];
 }
 
 const ThreadCard = ({
@@ -39,6 +42,7 @@ const ThreadCard = ({
   createdAt,
   comments,
   isComment,
+  likes,
 }: ThreadCardProps) => {
   return (
     <article
@@ -67,29 +71,24 @@ const ThreadCard = ({
             </Link>
             <p className="mt-2 text-small-regular text-light-2">{content}</p>
             <div className={`${isComment && 'mb-10'} mt-5 flex flex-row gap-3`}>
-              <Image
-                src="/assets/heart-gray.svg"
-                alt="heart"
-                width={20}
-                height={20}
-              />
+              <LikeButton threadId={id} userId={currentUserId} likes={likes} />
               <Link href={`/thread/${id}`}>
                 <Image
                   src="/assets/reply.svg"
-                  alt="heart"
+                  alt="reply"
                   width={20}
                   height={20}
                 />
               </Link>
               <Image
                 src="/assets/repost.svg"
-                alt="heart"
+                alt="repost"
                 width={20}
                 height={20}
               />
               <Image
                 src="/assets/share.svg"
-                alt="heart"
+                alt="share"
                 width={20}
                 height={20}
               />

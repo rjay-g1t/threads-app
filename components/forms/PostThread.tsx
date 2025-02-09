@@ -1,25 +1,19 @@
 'use client';
-import { useState } from 'react';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import Image from 'next/image';
 import { Textarea } from '../ui/textarea';
 import { usePathname, useRouter } from 'next/navigation';
 import { ThreadValidation } from '@/lib/validations/threads';
-import { updateUser } from '@/lib/actions/user.actions';
 import { createThread } from '@/lib/actions/thread.action';
 import { useOrganization } from '@clerk/nextjs';
 
@@ -39,8 +33,6 @@ function PostThread({ userId }: { userId: string }) {
   const onSubmitValues: SubmitHandler<
     z.infer<typeof ThreadValidation>
   > = async (values) => {
-    console.log('values', values);
-    console.log('organization', organization);
     try {
       await createThread({
         text: values.thread,

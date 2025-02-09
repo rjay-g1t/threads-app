@@ -16,7 +16,6 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import Image from 'next/image';
-import { Textarea } from '../ui/textarea';
 import { usePathname, useRouter } from 'next/navigation';
 import { CommentValidation } from '@/lib/validations/threads';
 import { updateUser } from '@/lib/actions/user.actions';
