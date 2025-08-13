@@ -1,28 +1,34 @@
 'use client';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
+
+import * as z from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { usePathname } from 'next/navigation';
+
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
-import { Textarea } from '../ui/textarea';
-import { usePathname, useRouter } from 'next/navigation';
 import { ThreadValidation } from '@/lib/validations/threads';
 import { createThread } from '@/lib/actions/thread.action';
 import { useOrganization } from '@clerk/nextjs';
 
-function PostThread({ userId }: { userId: string }) {
+interface Props {
+  userId: string;
+}
+
+function PostThread({ userId }: Props) {
   const pathname = usePathname();
-  const router = useRouter();
   const { organization } = useOrganization();
 
-  const form = useForm({
+  const form = useForm<z.infer<typeof ThreadValidation>>({
     resolver: zodResolver(ThreadValidation),
     defaultValues: {
       thread: '',
@@ -30,49 +36,43 @@ function PostThread({ userId }: { userId: string }) {
     },
   });
 
-  const onSubmitValues: SubmitHandler<
-    z.infer<typeof ThreadValidation>
-  > = async (values) => {
-    try {
-      await createThread({
-        text: values.thread,
-        author: values.accountId,
-        communityId: organization?.id || '',
-        path: pathname,
-      });
-      router.push('/');
-    } catch (error) {
-      console.log(`Failed to create thread: ${error}`);
-    }
+  const onSubmit = async (values: z.infer<typeof ThreadValidation>) => {
+    await createThread({
+      text: values.thread,
+      author: userId,
+      communityId: organization ? organization.id : null,
+      path: pathname,
+    });
+
+    form.reset();
   };
 
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmitValues)}
-        className="mt-10 flex flex-col justify-start gap-10"
+        className="flex flex-col gap-4"
+        onSubmit={form.handleSubmit(onSubmit)}
       >
         <FormField
           control={form.control}
           name="thread"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-3 w-full">
-              <FormLabel className="text-base-semibold text-light-2">
-                Content
-              </FormLabel>
-              <FormControl className="no-focus border border-dark-4 bg-dark-3 text-light-1">
+            <FormItem>
+              <FormControl>
                 <Textarea
-                  // {...field}
-                  rows={15}
+                  rows={3}
+                  placeholder="What's on your mind?"
+                  className="no-focus border-none bg-dark-3 text-light-1"
                   {...field}
-                  // onChange={(e) => handleImage(e, field.onChange)}
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
+
         <Button type="submit" className="bg-primary-500">
-          Post Thread
+          Post
         </Button>
       </form>
     </Form>

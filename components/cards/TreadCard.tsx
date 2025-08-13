@@ -29,6 +29,11 @@ interface ThreadCardProps {
   }[];
   isComment?: boolean;
   likes: string[];
+  likedBy?: {
+    id: string;
+    name: string;
+    image: string;
+  }[];
 }
 
 const ThreadCard = ({
@@ -42,8 +47,11 @@ const ThreadCard = ({
   createdAt,
   comments,
   isComment,
-  likes,
+  likes = [],
+  likedBy = [],
 }: ThreadCardProps) => {
+  const serializedLikes = Array.isArray(likes) ? [...likes] : [];
+
   return (
     <article
       className={`flex w-full flex-col rounded-xl ${
@@ -55,7 +63,7 @@ const ThreadCard = ({
           <div className="flex flex-col items-center">
             <Link href={`/profile/${author.id}`} className="relative h-11 w-11">
               <Image
-                src={author.image}
+                src={author.image || ''}
                 alt="author"
                 fill
                 className="cursor-pointer rounded-full"
@@ -71,7 +79,12 @@ const ThreadCard = ({
             </Link>
             <p className="mt-2 text-small-regular text-light-2">{content}</p>
             <div className={`${isComment && 'mb-10'} mt-5 flex flex-row gap-3`}>
-              <LikeButton threadId={id} userId={currentUserId} likes={likes} />
+              <LikeButton
+                threadId={id.toString()}
+                userId={currentUserId.toString()}
+                likes={serializedLikes}
+                likedBy={likedBy}
+              />
               <Link href={`/thread/${id}`}>
                 <Image
                   src="/assets/reply.svg"
