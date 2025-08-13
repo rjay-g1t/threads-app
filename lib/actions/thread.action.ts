@@ -42,26 +42,86 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
   connectToDatabase();
   const skipAmount = (pageNumber - 1) * pageSize;
 
-  // no parents post
-  const postsQuery = Thread.find({ parentId: { $in: [null, undefined] } })
-    .sort({ createdAt: 'desc' })
-    .skip(skipAmount)
-    .limit(pageSize)
-    .populate({ path: 'author', model: User })
-    .populate({
-      path: 'children',
-      populate: {
+  try {
+    // Fetch posts with their authors
+    const postsQuery = Thread.find({ parentId: { $in: [null, undefined] } })
+      .sort({ createdAt: 'desc' })
+      .skip(skipAmount)
+      .limit(pageSize)
+      .populate({
         path: 'author',
         model: User,
-        select: '_id name parentId image',
-      },
+      })
+      .populate({
+        path: 'children',
+        populate: {
+          path: 'author',
+          model: User,
+          select: 'id name image',
+        },
+      });
+
+    const totalPostsCount = await Thread.countDocuments({
+      parentId: { $in: [null, undefined] },
     });
-  const totalPostsCount = await Thread.countDocuments({
-    parentId: { $in: [null, undefined] },
-  });
-  const posts = await postsQuery.exec();
-  const isNext = totalPostsCount > skipAmount + posts.length;
-  return { posts, isNext };
+
+    const posts = await postsQuery.exec();
+
+    // Get liked users for each post
+    const postsWithLikes = await Promise.all(
+      posts.map(async (post) => {
+        const postObject = post.toObject();
+
+        interface LikedUser {
+          id: string;
+          name: string;
+          image: string;
+        }
+
+        let likedBy: LikedUser[] = [];
+
+        // Only proceed if there are likes
+        if (postObject.likes && postObject.likes.length > 0) {
+          try {
+            // Find users who liked this post using their MongoDB IDs
+            const likedUsers = await User.find({
+              _id: { $in: postObject.likes },
+            }).select('id name image');
+
+            // Map the users to the format we need
+            likedBy = likedUsers
+              .map((user) => ({
+                id: user.id || '', // Clerk ID
+                name: user.name || '',
+                image: user.image || '',
+              }))
+              .filter((user) => user.id && user.name && user.image); // Filter out any incomplete user data
+          } catch (error) {
+            console.error('Error fetching liked users:', error);
+          }
+        }
+
+        // Convert all MongoDB ObjectIds to strings
+        return {
+          ...postObject,
+          _id: postObject._id.toString(),
+          author: {
+            ...postObject.author,
+            _id: postObject.author._id.toString(),
+            id: postObject.author.id, // Keep Clerk ID
+          },
+          likes: postObject.likes?.map((like: string) => like.toString()) || [],
+          likedBy, // Array of users who liked the post
+        };
+      })
+    );
+
+    const isNext = totalPostsCount > skipAmount + posts.length;
+    return { posts: postsWithLikes, isNext };
+  } catch (error: any) {
+    console.error('Error fetching posts:', error);
+    throw error;
+  }
 }
 
 export async function fethThreadById(userId: string) {
@@ -162,7 +222,6 @@ export async function deleteThread(id: string, path: string): Promise<void> {
       id,
       ...descendantThreads.map((thread) => thread._id),
     ];
-
     // Extract the authorIds and communityIds to update User and Community models respectively
     const uniqueAuthorIds = new Set(
       [
@@ -199,6 +258,13 @@ export async function deleteThread(id: string, path: string): Promise<void> {
   }
 }
 
+interface LikedUser {
+  _id: string;
+  id: string;
+  name: string;
+  image: string;
+}
+
 export async function likeThread({
   threadId,
   userId,
@@ -211,70 +277,55 @@ export async function likeThread({
   isLiked: boolean;
 }) {
   try {
-    connectToDatabase();
+    await connectToDatabase();
 
-    // Find the thread by ID
+    // Find the user by their Clerk ID
+    const user = await User.findOne({ id: userId });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Find the thread by ID and ensure it exists
     const thread = await Thread.findById(threadId);
-
     if (!thread) {
       throw new Error('Thread not found');
     }
 
-    // Check if the user has already liked the thread
-    //const isLiked = thread.likes.includes(userId);
+    // Initialize likes array as string[] if it doesn't exist
+    thread.likes = thread.likes || [];
 
+    // Update likes array based on action
     if (isLiked) {
-      const indexOf = thread.likes.indexOf(userId);
-      thread.likes.splice(indexOf, 1);
-      await thread.save();
-      revalidatePath(path);
-      return;
-      //throw new Error('Thread already liked'); // thread.likes.indexOf(userId)
+      thread.likes = thread.likes.filter((like: string) => like !== userId);
+    } else if (!thread.likes.includes(userId)) {
+      thread.likes.push(userId);
     }
 
-    // Add the user's ID to the likes array
-    thread.likes.push(userId);
     await thread.save();
 
+    const likedUsers = await User.find({
+      id: { $in: thread.likes },
+    }).select('id name image');
+
+    const likedBy = likedUsers
+      .map((user) => ({
+        id: user.id ?? '',
+        name: user.name ?? '',
+        image: user.image ?? '',
+      }))
+      .filter((user): user is { id: string; name: string; image: string } =>
+        Boolean(user.id && user.name && user.image)
+      );
+
     revalidatePath(path);
-  } catch (error: any) {
-    throw new Error(`Failed to like thread: ${error.message}`);
+    return { success: true, likedBy };
+  } catch (error) {
+    console.error('Error in likeThread:', error);
+    throw new Error(
+      `Failed to like thread: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
-
-// export async function unlikeThread(
-//   threadId: string,
-//   userId: string,
-//   path: string
-// ) {
-//   try {
-//     connectToDatabase();
-
-//     // Find the thread by ID
-//     const thread = await Thread.findById(threadId);
-
-//     if (!thread) {
-//       throw new Error('Thread not found');
-//     }
-
-//     // Check if the user has liked the thread
-//     const isLiked = thread.likes.includes(userId);
-
-//     if (!isLiked) {
-//       throw new Error('Thread not liked yet');
-//     }
-
-//     // Remove the user's ID from the likes array
-//     thread.likes = thread.likes.filter(
-//       (id: any) => id.toString() !== userId.toString()
-//     );
-//     await thread.save();
-
-//     revalidatePath(path);
-//   } catch (error: any) {
-//     throw new Error(`Failed to unlike thread: ${error.message}`);
-//   }
-// }
 
 export async function fetchThreads() {
   try {
