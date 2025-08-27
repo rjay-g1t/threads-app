@@ -3,7 +3,7 @@ import Link from 'next/link';
 import DeleteThread from '../forms/DeleteThread';
 import { formatDateString } from '@/lib/utils';
 import LikeButton from '../shared/LikeButton';
-import { useOrganization } from '@clerk/nextjs';
+import PublicThreadActions from '../shared/PublicThreadActions';
 
 interface ThreadCardProps {
   key: string;
@@ -34,6 +34,7 @@ interface ThreadCardProps {
     name: string;
     image: string;
   }[];
+  isPublicView?: boolean;
 }
 
 const ThreadCard = ({
@@ -49,6 +50,7 @@ const ThreadCard = ({
   isComment,
   likes = [],
   likedBy = [],
+  isPublicView = false,
 }: ThreadCardProps) => {
   const serializedLikes = Array.isArray(likes) ? [...likes] : [];
 
@@ -79,20 +81,26 @@ const ThreadCard = ({
             </Link>
             <p className="mt-2 text-small-regular text-light-2">{content}</p>
             <div className={`${isComment && 'mb-10'} mt-5 flex flex-row gap-3`}>
-              <LikeButton
-                threadId={id.toString()}
-                userId={currentUserId.toString()}
-                likes={serializedLikes}
-                likedBy={likedBy}
-              />
-              <Link href={`/thread/${id}`}>
-                <Image
-                  src="/assets/reply.svg"
-                  alt="reply"
-                  width={20}
-                  height={20}
-                />
-              </Link>
+              {isPublicView ? (
+                <PublicThreadActions threadId={id} />
+              ) : (
+                <>
+                  <LikeButton
+                    threadId={id.toString()}
+                    userId={currentUserId.toString()}
+                    likes={serializedLikes}
+                    likedBy={likedBy}
+                  />
+                  <Link href={`/thread/${id}`}>
+                    <Image
+                      src="/assets/reply.svg"
+                      alt="reply"
+                      width={20}
+                      height={20}
+                    />
+                  </Link>
+                </>
+              )}
               <Image
                 src="/assets/repost.svg"
                 alt="repost"
@@ -116,13 +124,15 @@ const ThreadCard = ({
           </div>
         </div>
       </div>
-      <DeleteThread
-        threadId={JSON.stringify(id)}
-        currentUserId={currentUserId}
-        authorId={author.id}
-        parentId={parentId}
-        isComment={isComment}
-      />
+      {!isPublicView && (
+        <DeleteThread
+          threadId={JSON.stringify(id)}
+          currentUserId={currentUserId}
+          authorId={author.id}
+          parentId={parentId}
+          isComment={isComment}
+        />
+      )}
       {!isComment && comments.length > 0 && (
         <div className="ml-1 mt-3 flex items-center gap-2">
           {comments.slice(0, 2).map((comment, index) => (

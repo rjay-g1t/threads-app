@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import Link from 'next/link';
+import AuthModal from './AuthModal';
 
 interface LikedUser {
   id: string;
@@ -22,6 +23,7 @@ interface LikeButtonProps {
   userId: string;
   likes: string[];
   likedBy: LikedUser[];
+  isPublicView?: boolean;
 }
 
 const LikeButton = ({
@@ -29,12 +31,19 @@ const LikeButton = ({
   userId,
   likes = [],
   likedBy = [],
+  isPublicView = false,
 }: LikeButtonProps) => {
   const [isLiked, setIsLiked] = useState(likes.includes(userId));
   const [likeCount, setLikeCount] = useState(likes.length);
   const [currentLikedBy, setCurrentLikedBy] = useState(likedBy);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleLikeClick = async () => {
+    if (isPublicView) {
+      setShowAuthModal(true);
+      return;
+    }
+
     try {
       // Optimistically update UI
       setIsLiked(!isLiked);
@@ -55,62 +64,70 @@ const LikeButton = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <button onClick={handleLikeClick}>
-        <Image
-          src={isLiked ? '/assets/heart-filled.svg' : '/assets/heart-gray.svg'}
-          alt="heart"
-          width={24}
-          height={24}
-          className="cursor-pointer object-contain"
-        />
-      </button>
+    <>
+      <div className="flex items-center gap-2">
+        <button onClick={handleLikeClick}>
+          <Image
+            src={isLiked ? '/assets/heart-filled.svg' : '/assets/heart-gray.svg'}
+            alt="heart"
+            width={24}
+            height={24}
+            className="cursor-pointer object-contain"
+          />
+        </button>
 
-      {likeCount > 0 && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-subtle-medium text-gray-1 cursor-pointer">
-                {likeCount}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent
-              className="bg-dark-3 border-none text-light-1 p-3"
-              side="top"
-              align="center"
-            >
-              <div className="flex flex-col gap-2">
-                <p className="text-small-medium">Liked by:</p>
-                <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto">
-                  {currentLikedBy.length > 0 ? (
-                    currentLikedBy.map((user) => (
-                      <Link
-                        key={user.id}
-                        href={`/profile/${user.id}`}
-                        className="flex items-center gap-2 hover:bg-dark-4 p-2 rounded-lg"
-                      >
-                        <Image
-                          src={user.image}
-                          alt={user.name}
-                          width={24}
-                          height={24}
-                          className="rounded-full"
-                        />
-                        <span className="text-small-medium text-light-1">
-                          {user.name}
-                        </span>
-                      </Link>
-                    ))
-                  ) : (
-                    <p className="text-gray-1">No likes yet</p>
-                  )}
+        {likeCount > 0 && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-subtle-medium text-gray-1 cursor-pointer">
+                  {likeCount}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent
+                className="bg-dark-3 border-none text-light-1 p-3"
+                side="top"
+                align="center"
+              >
+                <div className="flex flex-col gap-2">
+                  <p className="text-small-medium">Liked by:</p>
+                  <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto">
+                    {currentLikedBy.length > 0 ? (
+                      currentLikedBy.map((user) => (
+                        <Link
+                          key={user.id}
+                          href={`/profile/${user.id}`}
+                          className="flex items-center gap-2 hover:bg-dark-4 p-2 rounded-lg"
+                        >
+                          <Image
+                            src={user.image}
+                            alt={user.name}
+                            width={24}
+                            height={24}
+                            className="rounded-full"
+                          />
+                          <span className="text-small-medium text-light-1">
+                            {user.name}
+                          </span>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="text-gray-1">No likes yet</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-    </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        action="like this thread"
+      />
+    </>
   );
 };
 
