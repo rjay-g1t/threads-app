@@ -21,7 +21,7 @@ export async function createThread({
   path,
 }: Params) {
   try {
-    connectToDatabase();
+    await connectToDatabase();
     const createdThread = await Thread.create({
       text,
       author,
@@ -39,7 +39,7 @@ export async function createThread({
 }
 
 export async function fetchPosts(pageNumber = 1, pageSize = 20) {
-  connectToDatabase();
+  await connectToDatabase();
   const skipAmount = (pageNumber - 1) * pageSize;
 
   try {
@@ -67,57 +67,33 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
 
     const posts = await postsQuery.exec();
 
-    // Get liked users for each post
-    const postsWithLikes = await Promise.all(
-      posts.map(async (post) => {
-        const postObject = post.toObject();
-
-        interface LikedUser {
-          id: string;
-          name: string;
-          image: string;
-        }
-
-        let likedBy: LikedUser[] = [];
-
-        // Only proceed if there are likes
-        if (postObject.likes && postObject.likes.length > 0) {
-          try {
-            // Find users who liked this post using their Clerk IDs (stored in 'id' field)
-            const likedUsers = await User.find({
-              id: { $in: postObject.likes },
-            }).select('id name image');
-
-            // Map the users to the format we need
-            likedBy = likedUsers
-              .map((user) => ({
-                id: user.id || '', // Clerk ID
-                name: user.name || '',
-                image: user.image || '',
-              }))
-              .filter((user) => user.id && user.name && user.image); // Filter out any incomplete user data
-          } catch (error) {
-            console.error('Error fetching liked users:', error);
-          }
-        }
-
-        // Convert all MongoDB ObjectIds to strings
-        return {
-          ...postObject,
-          _id: postObject._id.toString(),
-          author: {
-            ...postObject.author,
-            _id: postObject.author._id.toString(),
-            id: postObject.author.id, // Keep Clerk ID
-          },
-          likes: postObject.likes?.map((like: string) => like.toString()) || [],
-          likedBy, // Array of users who liked the post
-        };
-      })
-    );
+    // Convert posts to plain objects with proper serialization
+    const serializedPosts = posts.map((post) => {
+      const postObject = post.toObject();
+      
+      return {
+        ...postObject,
+        _id: postObject._id.toString(),
+        author: {
+          ...postObject.author,
+          _id: postObject.author._id.toString(),
+          id: postObject.author.id, // Keep Clerk ID
+        },
+        likes: postObject.likes || [], // Keep as Clerk IDs array
+        children: postObject.children?.map((child: any) => ({
+          ...child,
+          _id: child._id?.toString(),
+          author: child.author ? {
+            ...child.author,
+            _id: child.author._id?.toString(),
+            id: child.author.id,
+          } : null,
+        })) || [],
+      };
+    });
 
     const isNext = totalPostsCount > skipAmount + posts.length;
-    return { posts: postsWithLikes, isNext };
+    return { posts: serializedPosts, isNext };
   } catch (error: any) {
     console.error('Error fetching posts:', error);
     throw error;
@@ -125,7 +101,7 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
 }
 
 export async function fethThreadById(userId: string) {
-  connectToDatabase();
+  await connectToDatabase();
   try {
     // TODO: Populate Community
     const thread = await Thread.findById(userId)
@@ -171,7 +147,7 @@ export async function AddCommentToThread({
   userId: string;
   path: string;
 }) {
-  connectToDatabase();
+  await connectToDatabase();
   try {
     const originalThread = await Thread.findById(threadId);
     if (!originalThread) {
@@ -205,7 +181,7 @@ async function fetchAllChildThreads(threadId: string): Promise<any[]> {
 
 export async function deleteThread(id: string, path: string): Promise<void> {
   try {
-    connectToDatabase();
+    await connectToDatabase();
 
     // Find the thread to be deleted (the main thread)
     const mainThread = await Thread.findById(id).populate('author community');
@@ -329,7 +305,7 @@ export async function likeThread({
 
 export async function fetchThreads() {
   try {
-    connectToDatabase();
+    await connectToDatabase();
 
     const threadsQuery = Thread.find({})
       .populate('author')
