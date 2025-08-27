@@ -70,7 +70,7 @@ const Comment: React.FC<CommentProps> = ({
             <FormItem className="flex items-center gap-3 w-full">
               <FormLabel>
                 <Image
-                  src={currentUserImage}
+                  src={currentUserImage || '/assets/user.svg'}
                   alt="user-image"
                   width={48}
                   height={48}

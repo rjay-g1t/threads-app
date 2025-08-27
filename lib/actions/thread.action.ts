@@ -70,7 +70,7 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
     // Convert posts to plain objects with proper serialization
     const serializedPosts = posts.map((post) => {
       const postObject = post.toObject();
-      
+
       return {
         ...postObject,
         _id: postObject._id.toString(),
@@ -80,15 +80,18 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
           id: postObject.author.id, // Keep Clerk ID
         },
         likes: postObject.likes || [], // Keep as Clerk IDs array
-        children: postObject.children?.map((child: any) => ({
-          ...child,
-          _id: child._id?.toString(),
-          author: child.author ? {
-            ...child.author,
-            _id: child.author._id?.toString(),
-            id: child.author.id,
-          } : null,
-        })) || [],
+        children:
+          postObject.children?.map((child: any) => ({
+            ...child,
+            _id: child._id?.toString(),
+            author: child.author
+              ? {
+                  ...child.author,
+                  _id: child.author._id?.toString(),
+                  id: child.author.id,
+                }
+              : null,
+          })) || [],
       };
     });
 
