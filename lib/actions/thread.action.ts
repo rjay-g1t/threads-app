@@ -83,9 +83,9 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
         // Only proceed if there are likes
         if (postObject.likes && postObject.likes.length > 0) {
           try {
-            // Find users who liked this post using their MongoDB IDs
+            // Find users who liked this post using their Clerk IDs (stored in 'id' field)
             const likedUsers = await User.find({
-              _id: { $in: postObject.likes },
+              id: { $in: postObject.likes },
             }).select('id name image');
 
             // Map the users to the format we need
