@@ -26,7 +26,7 @@ const Page = async () => {
               <Link key={log._id} href={`/thread/${log.parentId}`}>
                 <article className="activity-card">
                   <Image
-                    src={log.author.image}
+                    src={log.author.image || '/assets/user.svg'}
                     alt="Profile Picture"
                     width={20}
                     height={20}

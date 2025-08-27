@@ -65,7 +65,7 @@ const ThreadCard = ({
           <div className="flex flex-col items-center">
             <Link href={`/profile/${author.id}`} className="relative h-11 w-11">
               <Image
-                src={author.image || ''}
+                src={author.image || '/assets/user.svg'}
                 alt="author"
                 fill
                 className="cursor-pointer rounded-full"
@@ -138,7 +138,7 @@ const ThreadCard = ({
           {comments.slice(0, 2).map((comment, index) => (
             <Image
               key={index}
-              src={comment.author.image}
+              src={comment.author.image || '/assets/user.svg'}
               alt={`user_${index}`}
               width={24}
               height={24}
@@ -164,13 +164,15 @@ const ThreadCard = ({
             {community && ` - ${community.name} Community`}
           </p>
 
-          <Image
-            src={community.image}
-            alt={community.name}
-            width={14}
-            height={14}
-            className="ml-1 rounded-full object-cover"
-          />
+          {community && community.image && (
+            <Image
+              src={community.image}
+              alt={community.name}
+              width={14}
+              height={14}
+              className="ml-1 rounded-full object-cover"
+            />
+          )}
         </Link>
       )}
     </article>

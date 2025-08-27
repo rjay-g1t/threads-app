@@ -27,7 +27,7 @@ const UserCard: React.FC<UserCardProps> = ({
     <article className="user-card">
       <div className="user-card_avatar">
         <Image
-          src={imgUrl}
+          src={imgUrl || '/assets/user.svg'}
           alt="logo"
           width={48}
           height={48}

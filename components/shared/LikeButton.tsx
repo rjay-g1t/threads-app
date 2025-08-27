@@ -100,7 +100,7 @@ const LikeButton = ({
                           className="flex items-center gap-2 hover:bg-dark-4 p-2 rounded-lg"
                         >
                           <Image
-                            src={user.image}
+                            src={user.image || '/assets/user.svg'}
                             alt={user.name}
                             width={24}
                             height={24}

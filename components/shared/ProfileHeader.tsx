@@ -23,7 +23,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <div className="flex items-center gap-3">
           <div className="relative h-20 w-20 object-cover">
             <Image
-              src={imgUrl}
+              src={imgUrl || '/assets/user.svg'}
               alt="profile image"
               fill
               className="rounded-full object-cover shadow-2xl"
